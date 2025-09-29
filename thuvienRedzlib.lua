@@ -887,7 +887,7 @@ local redzlib = {
 }
 
 local ViewportSize = workspace.CurrentCamera.ViewportSize
-local UIScale = ViewportSize.Y / 500
+local UIScale = ViewportSize.Y / 450
 
 local Settings = redzlib.Settings
 local Flags = redzlib.Flags
@@ -1395,7 +1395,7 @@ function redzlib:SetTheme(NewTheme)
 end
 
 function redzlib:SetScale(NewScale)
-	NewScale = ViewportSize.Y / math.clamp(NewScale, 600, 2000)
+	NewScale = ViewportSize.Y / math.clamp(NewScale, 300, 2000)
 	UIScale, ScreenGui.Scale.Scale = NewScale, NewScale
 end
 
