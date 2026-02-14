@@ -64,8 +64,7 @@ local themes = {
         TabToggleEnabled = Color3.fromRGB(225, 225, 225),
         Slider = Color3.fromRGB(225, 225, 225)
     },
-  Purple = {
-       Purple = {
+	Purple = {
         TextColor = Color3.fromRGB(255, 255, 255),
         MainFrame = Color3.fromRGB(15, 15, 20), -- Nền chính rất tối, hơi ám xanh tím
         TabBackground = Color3.fromRGB(10, 10, 12),
