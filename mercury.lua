@@ -267,46 +267,48 @@ function Library:create(options)
     self.mainFrame = core
 
     -- TÍNH NĂNG RESIZE Ở GÓC DƯỚI BÊN PHẢI (ADDED BY YÊU CẦU)
-    local resizeButton = core:object("TextButton", {
-        AnchorPoint = Vector2.new(1, 1),
-        Position = UDim2.new(1, 0, 1, 0),
-        Size = UDim2.fromOffset(20, 20),
-        BackgroundTransparency = 1,
-        Text = "◢",
-        Theme = {TextColor3 = "StrongText"},
-        TextSize = 14,
-        ZIndex = 999
-    })
-
+-- TÍNH NĂNG RESIZE Ở GÓC DƯỚI BÊN PHẢI (ĐÃ FIX MƯỢT 100%)
+    local resizeBtn = Instance.new("TextButton")
+    resizeBtn.Name = "ResizeHandle"
+    resizeBtn.Parent = core.AbsoluteObject
+    resizeBtn.AnchorPoint = Vector2.new(1, 1)
+    resizeBtn.Position = UDim2.new(1, 0, 1, 0)
+    resizeBtn.Size = UDim2.new(0, 25, 0, 25)
+    resizeBtn.BackgroundTransparency = 1
+    resizeBtn.Text = "◢"
+    resizeBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    resizeBtn.TextSize = 16
+    resizeBtn.ZIndex = 99999
+    resizeBtn.Active = true -- Rất quan trọng: Ngăn không cho thao tác kéo bị lọt xuống khung main
+    
     local draggingResize = false
-    local dragStart, startSize
+    local dragStart
+    local startSize
 
-    resizeButton.InputBegan:Connect(function(input)
+    resizeBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             draggingResize = true
             dragStart = input.Position
-            startSize = core.Size
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    draggingResize = false
-                    rawset(core, "oldSize", core.Size) -- Cập nhật size mới cho các hàm show/hide
-                end
-            end)
+            startSize = core.AbsoluteObject.Size
+        end
+    end)
+
+    resizeBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            draggingResize = false
+            rawset(core, "oldSize", core.AbsoluteObject.Size) -- Lưu lại kích thước mới
         end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
         if draggingResize and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            -- Giới hạn size min là 400x300, max là màn hình
-            local newWidth = math.clamp(startSize.X.Offset + delta.X, 400, Camera.ViewportSize.X)
-            local newHeight = math.clamp(startSize.Y.Offset + delta.Y, 300, Camera.ViewportSize.Y)
+            -- Giới hạn nhỏ nhất là 450x300, lớn nhất là 1500x1000
+            local newWidth = math.clamp(startSize.X.Offset + delta.X, 450, 1500)
+            local newHeight = math.clamp(startSize.Y.Offset + delta.Y, 300, 1000)
             
-            core:tween({
-                Size = UDim2.fromOffset(newWidth, newHeight),
-                Length = 0.05
-            })
+            -- Scale trực tiếp, không qua Tween để thao tác rê chuột không bị delay
+            core.AbsoluteObject.Size = UDim2.new(0, newWidth, 0, newHeight)
         end
     end)
     -- KẾT THÚC LOGIC RESIZE
