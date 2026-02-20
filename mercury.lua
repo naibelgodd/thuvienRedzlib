@@ -266,69 +266,53 @@ function Library:create(options)
     rawset(core, "oldSize", options.Size)
     self.mainFrame = core
 
-    -- TÍNH NĂNG RESIZE Ở GÓC DƯỚI BÊN PHẢI (ADDED BY YÊU CẦU)
--- TÍNH NĂNG RESIZE Ở GÓC DƯỚI BÊN PHẢI (ĐÃ FIX MƯỢT 100%)
-    -- [[ TÍNH NĂNG RESIZE SIÊU CẤP - FIX TRIỆT ĐỂ ]]
+-- [[ SIÊU CẤP RESIZE - BẢN FIX CUỐI CÙNG ]]
     local resizeBtn = Instance.new("TextButton")
-    resizeBtn.Name = "ResizeHandle"
-    resizeBtn.Parent = core.AbsoluteObject -- Gắn trực tiếp vào Frame gốc
+    resizeBtn.Name = "FinalResizeHandle"
+    resizeBtn.Parent = core.AbsoluteObject
     resizeBtn.AnchorPoint = Vector2.new(1, 1)
     resizeBtn.Position = UDim2.new(1, 0, 1, 0)
-    resizeBtn.Size = UDim2.new(0, 30, 0, 30) -- Làm to hơn một chút cho dễ cầm
+    resizeBtn.Size = UDim2.new(0, 35, 0, 35) -- Làm to hẳn ra cho dễ cầm
     resizeBtn.BackgroundTransparency = 1
     resizeBtn.Text = "◢"
-    resizeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-    resizeBtn.TextSize = 20
-    resizeBtn.ZIndex = 10000 -- Đẩy lên cao nhất để không bị đè
-    resizeBtn.Active = true 
+    resizeBtn.TextColor3 = Color3.fromRGB(226, 183, 20) -- Màu vàng nổi bật
+    resizeBtn.TextSize = 25
+    resizeBtn.ZIndex = 50000 -- Đảm bảo nằm trên mọi thứ
     
     local draggingResize = false
-    local dragStart, startSize
-
-    -- Hiệu ứng khi di chuột vào nút kéo
-    resizeBtn.MouseEnter:Connect(function()
-        resizeBtn.TextColor3 = Color3.fromRGB(226, 183, 20) -- Đổi sang màu vàng Serika
-    end)
-    resizeBtn.MouseLeave:Connect(function()
-        if not draggingResize then
-            resizeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-        end
+    
+    -- Tắt hệ thống Drag của Mercury khi nhấn vào nút này
+    resizeBtn.MouseButton1Down:Connect(function()
+        draggingResize = true
+        Library.LockDragging = true -- Ép Mercury không được di chuyển Menu
+        
+        -- Animation phản hồi
+        resizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     end)
 
-    resizeBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            draggingResize = true
-            dragStart = input.Position
-            startSize = core.AbsoluteObject.Size
-            
-            -- Chặn không cho khung menu tự ý di chuyển khi đang resize
-            Library.LockDragging = true 
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            draggingResize = false
-            Library.LockDragging = false -- Trả lại quyền di chuyển menu
-            resizeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-            rawset(core, "oldSize", core.AbsoluteObject.Size) 
-        end
-    end)
-
+    -- Lắng nghe di chuyển chuột trên toàn bộ máy tính để mượt hơn
     UserInputService.InputChanged:Connect(function(input)
         if draggingResize and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
+            local mousePos = UserInputService:GetMouseLocation()
+            local framePos = core.AbsoluteObject.AbsolutePosition
             
-            -- Ép kích thước thay đổi trực tiếp trên AbsoluteObject
-            local newX = math.clamp(startSize.X.Offset + delta.X, 400, Camera.ViewportSize.X)
-            local newY = math.clamp(startSize.Y.Offset + delta.Y, 300, Camera.ViewportSize.Y)
+            -- Tính toán kích thước mới dựa trên vị trí chuột trừ đi vị trí khung
+            -- Phải cộng thêm GuiInset (thường là 36 pixel trên PC) để không bị lệch tâm
+            local newX = math.clamp(mousePos.X - framePos.X, 400, Camera.ViewportSize.X)
+            local newY = math.clamp(mousePos.Y - framePos.Y - 36, 300, Camera.ViewportSize.Y)
             
             core.AbsoluteObject.Size = UDim2.new(0, newX, 0, newY)
-            
-            -- Cập nhật lại các thành phần con bên trong nếu cần
-            if core.AbsoluteObject:FindFirstChild("Content") then
-                -- Mercury Lib tự động scale con theo cha nên không cần dòng này, 
-                -- nhưng nếu bị lỗi layout thì thêm vào đây.
+        end
+    end)
+
+    -- Thả ra thì trả lại quyền kéo Menu
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if draggingResize then
+                draggingResize = false
+                Library.LockDragging = false -- Cho phép Mercury kéo Menu trở lại
+                resizeBtn.TextColor3 = Color3.fromRGB(226, 183, 20)
+                rawset(core, "oldSize", core.AbsoluteObject.Size)
             end
         end
     end)
