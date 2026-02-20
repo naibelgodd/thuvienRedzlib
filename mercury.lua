@@ -268,50 +268,71 @@ function Library:create(options)
 
     -- TÍNH NĂNG RESIZE Ở GÓC DƯỚI BÊN PHẢI (ADDED BY YÊU CẦU)
 -- TÍNH NĂNG RESIZE Ở GÓC DƯỚI BÊN PHẢI (ĐÃ FIX MƯỢT 100%)
+    -- [[ TÍNH NĂNG RESIZE SIÊU CẤP - FIX TRIỆT ĐỂ ]]
     local resizeBtn = Instance.new("TextButton")
     resizeBtn.Name = "ResizeHandle"
-    resizeBtn.Parent = core.AbsoluteObject
+    resizeBtn.Parent = core.AbsoluteObject -- Gắn trực tiếp vào Frame gốc
     resizeBtn.AnchorPoint = Vector2.new(1, 1)
     resizeBtn.Position = UDim2.new(1, 0, 1, 0)
-    resizeBtn.Size = UDim2.new(0, 25, 0, 25)
+    resizeBtn.Size = UDim2.new(0, 30, 0, 30) -- Làm to hơn một chút cho dễ cầm
     resizeBtn.BackgroundTransparency = 1
     resizeBtn.Text = "◢"
-    resizeBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-    resizeBtn.TextSize = 16
-    resizeBtn.ZIndex = 99999
-    resizeBtn.Active = true -- Rất quan trọng: Ngăn không cho thao tác kéo bị lọt xuống khung main
+    resizeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    resizeBtn.TextSize = 20
+    resizeBtn.ZIndex = 10000 -- Đẩy lên cao nhất để không bị đè
+    resizeBtn.Active = true 
     
     local draggingResize = false
-    local dragStart
-    local startSize
+    local dragStart, startSize
+
+    -- Hiệu ứng khi di chuột vào nút kéo
+    resizeBtn.MouseEnter:Connect(function()
+        resizeBtn.TextColor3 = Color3.fromRGB(226, 183, 20) -- Đổi sang màu vàng Serika
+    end)
+    resizeBtn.MouseLeave:Connect(function()
+        if not draggingResize then
+            resizeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+    end)
 
     resizeBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             draggingResize = true
             dragStart = input.Position
             startSize = core.AbsoluteObject.Size
+            
+            -- Chặn không cho khung menu tự ý di chuyển khi đang resize
+            Library.LockDragging = true 
         end
     end)
 
-    resizeBtn.InputEnded:Connect(function(input)
+    UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             draggingResize = false
-            rawset(core, "oldSize", core.AbsoluteObject.Size) -- Lưu lại kích thước mới
+            Library.LockDragging = false -- Trả lại quyền di chuyển menu
+            resizeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+            rawset(core, "oldSize", core.AbsoluteObject.Size) 
         end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
         if draggingResize and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            -- Giới hạn nhỏ nhất là 450x300, lớn nhất là 1500x1000
-            local newWidth = math.clamp(startSize.X.Offset + delta.X, 450, 1500)
-            local newHeight = math.clamp(startSize.Y.Offset + delta.Y, 300, 1000)
             
-            -- Scale trực tiếp, không qua Tween để thao tác rê chuột không bị delay
-            core.AbsoluteObject.Size = UDim2.new(0, newWidth, 0, newHeight)
+            -- Ép kích thước thay đổi trực tiếp trên AbsoluteObject
+            local newX = math.clamp(startSize.X.Offset + delta.X, 400, Camera.ViewportSize.X)
+            local newY = math.clamp(startSize.Y.Offset + delta.Y, 300, Camera.ViewportSize.Y)
+            
+            core.AbsoluteObject.Size = UDim2.new(0, newX, 0, newY)
+            
+            -- Cập nhật lại các thành phần con bên trong nếu cần
+            if core.AbsoluteObject:FindFirstChild("Content") then
+                -- Mercury Lib tự động scale con theo cha nên không cần dòng này, 
+                -- nhưng nếu bị lỗi layout thì thêm vào đây.
+            end
         end
     end)
-    -- KẾT THÚC LOGIC RESIZE
+    -- [[ KẾT THÚC LOGIC RESIZE ]]
 	local tabButtons = core:object("ScrollingFrame", {
         Size = UDim2.new(1, -40, 0, 25),
         Position = UDim2.fromOffset(5, 5),
