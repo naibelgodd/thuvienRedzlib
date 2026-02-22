@@ -1204,11 +1204,11 @@ do
             Converted["_Name"].Name = "Name"
             Converted["_Name"].Parent = Converted["_UI_Library"]
 
-            Converted["_Creator"].Value = "RoadToGlory#9879"
+            Converted["_Creator"].Value = "Nguyên.Dep.Zai"
             Converted["_Creator"].Name = "Creator"
             Converted["_Creator"].Parent = Converted["_UI_Library"]
 
-            Converted["_Discord"].Value = "https://discord.gg/xu5dDS3Pb9"
+            Converted["_Discord"].Value = "https://discord.gg/pBk7fRaX"
             Converted["_Discord"].Name = "Discord"
             Converted["_Discord"].Parent = Converted["_UI_Library"]
 
